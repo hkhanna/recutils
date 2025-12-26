@@ -449,6 +449,8 @@ def _check_record_set(record_set: RecordSet, errors: list[RecfixError]) -> None:
         # Check key uniqueness across records
         if key_field and record.has_field(key_field):
             key_value = record.get_field(key_field)
+            if key_value is None:
+                continue
             if key_value in key_values:
                 errors.append(
                     RecfixError(
@@ -542,7 +544,7 @@ def _sort_record_set(record_set: RecordSet) -> RecordSet:
     type_checker = TypeChecker(record_set.descriptor)
 
     def get_sort_key(record: Record) -> tuple:
-        keys = []
+        keys: list[tuple[int, int | float, str]] = []
         for field_name in sort_fields:
             value = record.get_field(field_name)
             if value is None:

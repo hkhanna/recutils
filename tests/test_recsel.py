@@ -302,7 +302,7 @@ class TestSortedOutput:
     def test_sort_respects_descriptor(self):
         # ITEMS_REC has %sort: Title in descriptor
         result = recsel(ITEMS_REC, record_type="Item")
-        titles = [r.get_field("Type") for r in result.records]
+        [r.get_field("Type") for r in result.records]
         # Should be sorted alphabetically by Type (since Title is not in data)
         # Actually the descriptor says %sort: Title but there's no Title field
         # The sort should handle missing fields gracefully

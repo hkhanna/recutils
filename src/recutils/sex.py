@@ -106,6 +106,8 @@ class Lexer:
             if ch == "\\":
                 self._advance()
                 escaped = self._advance()
+                if escaped is None:
+                    raise LexerError(f"Unexpected end of string at position {self.pos}")
                 if escaped == "n":
                     result.append("\n")
                 elif escaped == "t":
@@ -118,33 +120,45 @@ class Lexer:
                 self._advance()
                 break
             else:
-                result.append(self._advance())
+                advanced = self._advance()
+                if advanced is not None:
+                    result.append(advanced)
         return "".join(result)
 
     def _read_number(self) -> Token:
         start_pos = self.pos
-        result = []
+        result: list[str] = []
 
         # Check for sign
-        if self._peek() in ("+", "-"):
-            result.append(self._advance())
+        ch = self._peek()
+        if ch in ("+", "-"):
+            result.append(ch)
+            self._advance()
 
         # Check for hex or octal
         if self._peek() == "0" and self._peek(1) in ("x", "X"):
-            result.append(self._advance())  # 0
-            result.append(self._advance())  # x
-            while self._peek() and self._peek() in "0123456789abcdefABCDEF":
-                result.append(self._advance())
+            result.append("0")
+            self._advance()
+            result.append(self._peek() or "x")
+            self._advance()
+            ch = self._peek()
+            while ch is not None and ch in "0123456789abcdefABCDEF":
+                result.append(ch)
+                self._advance()
+                ch = self._peek()
             return Token(TokenType.INTEGER, int("".join(result), 16), start_pos)
 
         # Regular number (may be octal if starts with 0)
         is_real = False
-        while self._peek() and (self._peek().isdigit() or self._peek() == "."):
-            if self._peek() == ".":
+        ch = self._peek()
+        while ch is not None and (ch.isdigit() or ch == "."):
+            if ch == ".":
                 if is_real:
                     break  # Second dot, stop
                 is_real = True
-            result.append(self._advance())
+            result.append(ch)
+            self._advance()
+            ch = self._peek()
 
         value_str = "".join(result)
         if is_real:
@@ -160,9 +174,12 @@ class Lexer:
             return Token(TokenType.INTEGER, int(value_str), start_pos)
 
     def _read_field(self) -> str:
-        result = []
-        while self._peek() and (self._peek().isalnum() or self._peek() == "_"):
-            result.append(self._advance())
+        result: list[str] = []
+        ch = self._peek()
+        while ch is not None and (ch.isalnum() or ch == "_"):
+            result.append(ch)
+            self._advance()
+            ch = self._peek()
         return "".join(result)
 
     def next_token(self) -> Token:
@@ -179,15 +196,12 @@ class Lexer:
             return Token(TokenType.STRING, self._read_string(ch), start_pos)
 
         # Numbers (including those starting with . like .12)
-        if ch.isdigit() or (ch == "." and self._peek(1) and self._peek(1).isdigit()):
+        next_ch = self._peek(1)
+        if ch.isdigit() or (ch == "." and next_ch is not None and next_ch.isdigit()):
             return self._read_number()
 
         # Negative numbers
-        if (
-            ch == "-"
-            and self._peek(1)
-            and (self._peek(1).isdigit() or self._peek(1) == ".")
-        ):
+        if ch == "-" and next_ch is not None and (next_ch.isdigit() or next_ch == "."):
             return self._read_number()
 
         # Field names (identifiers)
@@ -197,7 +211,7 @@ class Lexer:
             return Token(TokenType.FIELD, name, start_pos)
 
         # Special field names starting with %
-        if ch == "%" and self._peek(1) and self._peek(1).isalpha():
+        if ch == "%" and next_ch is not None and next_ch.isalpha():
             self._advance()  # consume %
             name = "%" + self._read_field()
             return Token(TokenType.FIELD, name, start_pos)
@@ -689,14 +703,14 @@ class Evaluator:
             if node.op in ("<<", ">>", "=="):
                 # TODO: Implement proper date parsing and comparison
                 # For now, treat as string comparison
-                l = self._to_string(left)
-                r = self._to_string(right)
+                left_str = self._to_string(left)
+                right_str = self._to_string(right)
                 if node.op == "<<":
-                    return 1 if l < r else 0
+                    return 1 if left_str < right_str else 0
                 if node.op == ">>":
-                    return 1 if l > r else 0
+                    return 1 if left_str > right_str else 0
                 if node.op == "==":
-                    return 1 if l == r else 0
+                    return 1 if left_str == right_str else 0
 
         raise EvalError(f"Cannot evaluate node: {node}")
 

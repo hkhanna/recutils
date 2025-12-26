@@ -303,6 +303,7 @@ def recsel(
     # Handle field selection and output formatting
     if print_fields or print_values or print_row:
         field_spec = print_fields or print_values or print_row
+        assert field_spec is not None  # Guaranteed by the if condition above
         fields = _parse_field_list(field_spec)
 
         if print_row:
@@ -310,7 +311,7 @@ def recsel(
             rows = []
             for record in selected:
                 selected_fields = _select_fields(record, fields)
-                row_values = [f.value for f in selected_fields]
+                row_values = [fld.value for fld in selected_fields]
                 rows.append(" ".join(row_values))
             return rows
 
@@ -319,8 +320,8 @@ def recsel(
             result_lines = []
             for record in selected:
                 selected_fields = _select_fields(record, fields)
-                for f in selected_fields:
-                    result_lines.append(f.value)
+                for fld in selected_fields:
+                    result_lines.append(fld.value)
             return "\n".join(result_lines) if not collapse else " ".join(result_lines)
 
         # print_fields: return records with only selected fields
