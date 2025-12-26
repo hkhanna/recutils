@@ -24,8 +24,6 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/hkhanna/python-recutils"
-Repository = "https://github.com/hkhanna/python-recutils"
-Issues = "https://github.com/hkhanna/python-recutils/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
