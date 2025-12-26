@@ -1,17 +1,17 @@
-# python-recutils
+# recutils
 
 A Python implementation of [GNU recutils](https://www.gnu.org/software/recutils/), a set of tools and libraries to access human-editable, text-based databases called recfiles.
 
 ## Installation
 
 ```bash
-pip install python-recutils
+pip install recutils
 ```
 
 Or with uv:
 
 ```bash
-uv add python-recutils
+uv add recutils
 ```
 
 ## Development
@@ -19,8 +19,8 @@ uv add python-recutils
 To contribute or modify the library:
 
 ```bash
-git clone https://github.com/harrykhanna/python-recutils.git
-cd python-recutils
+git clone https://github.com/hkhanna/recutils.git
+cd recutils
 uv sync
 ```
 
@@ -35,7 +35,7 @@ uv run pytest tests/ -v
 ### Parsing Rec Files
 
 ```python
-from python_recutils import parse, parse_file
+from recutils import parse, parse_file
 
 # Parse from string
 data = """
@@ -61,7 +61,7 @@ with open('contacts.rec') as f:
 The `recsel` function mirrors the interface of the `recsel` command-line utility.
 
 ```python
-from python_recutils import recsel, format_recsel_output
+from recutils import recsel, format_recsel_output
 
 data = """
 %rec: Book
@@ -173,7 +173,7 @@ recsel(data, expression="Price * Quantity > 100")
 The `recfix` function checks and fixes rec files, similar to the `recfix` command-line utility.
 
 ```python
-from python_recutils import recfix, format_recfix_output
+from recutils import recfix, format_recfix_output
 
 data = """
 %rec: Contact
@@ -247,7 +247,7 @@ result = recfix(encrypted_data, decrypt=True, password="mykey")
 ### Working with Records
 
 ```python
-from python_recutils import Record, Field
+from recutils import Record, Field
 
 # Create a record
 record = Record(fields=[
@@ -273,7 +273,7 @@ print(str(record))
 ### Evaluating Expressions Directly
 
 ```python
-from python_recutils import evaluate_sex, Record, Field
+from recutils import evaluate_sex, Record, Field
 
 record = Record(fields=[
     Field('Age', '25'),

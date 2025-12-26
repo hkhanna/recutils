@@ -1,7 +1,7 @@
 """Tests for the recfix functionality."""
 
 import pytest
-from python_recutils import (
+from recutils import (
     recfix, RecfixResult, RecfixError, ErrorSeverity,
     format_recfix_output, parse
 )

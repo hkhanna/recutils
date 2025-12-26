@@ -1,8 +1,8 @@
 """Tests for selection expressions (SEX) parser and evaluator."""
 
 import pytest
-from python_recutils.parser import Record, Field
-from python_recutils.sex import (
+from recutils.parser import Record, Field
+from recutils.sex import (
     Lexer, Parser, Evaluator, TokenType,
     evaluate_sex, LexerError, ParseError
 )

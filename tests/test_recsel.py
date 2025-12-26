@@ -1,7 +1,7 @@
 """Tests for the recsel function."""
 
 import pytest
-from python_recutils import recsel, parse, format_recsel_output, RecselResult
+from recutils import recsel, parse, format_recsel_output, RecselResult
 
 
 # Sample data from the GNU recutils manual
