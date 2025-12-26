@@ -1,8 +1,11 @@
 """Tests for the recfix functionality."""
 
 from recutils import (
-    recfix, RecfixResult, RecfixError, ErrorSeverity,
-    format_recfix_output
+    recfix,
+    RecfixResult,
+    RecfixError,
+    ErrorSeverity,
+    format_recfix_output,
 )
 
 
@@ -34,8 +37,10 @@ Email: john@example.com
 Name: Jane"""
         result = recfix(data)
         assert not result.success
-        assert any(e.field_name == 'Email' and 'missing mandatory' in e.message
-                   for e in result.errors)
+        assert any(
+            e.field_name == "Email" and "missing mandatory" in e.message
+            for e in result.errors
+        )
 
     def test_check_prohibited_field(self):
         """Test detection of prohibited field."""
@@ -46,8 +51,9 @@ Name: John
 SSN: 123-45-6789"""
         result = recfix(data)
         assert not result.success
-        assert any(e.field_name == 'SSN' and 'prohibited' in e.message
-                   for e in result.errors)
+        assert any(
+            e.field_name == "SSN" and "prohibited" in e.message for e in result.errors
+        )
 
     def test_check_allowed_fields(self):
         """Test detection of non-allowed field."""
@@ -59,8 +65,10 @@ Phone: 123
 Email: john@example.com"""
         result = recfix(data)
         assert not result.success
-        assert any(e.field_name == 'Email' and 'not in allowed' in e.message
-                   for e in result.errors)
+        assert any(
+            e.field_name == "Email" and "not in allowed" in e.message
+            for e in result.errors
+        )
 
     def test_check_unique_field_duplicate_in_record(self):
         """Test detection of duplicate unique field within a record."""
@@ -72,8 +80,9 @@ Email: john@example.com
 Email: john2@example.com"""
         result = recfix(data)
         assert not result.success
-        assert any(e.field_name == 'Email' and 'unique' in e.message
-                   for e in result.errors)
+        assert any(
+            e.field_name == "Email" and "unique" in e.message for e in result.errors
+        )
 
     def test_check_key_duplicate_across_records(self):
         """Test detection of duplicate key across records."""
@@ -87,8 +96,9 @@ Id: 1
 Name: Jane"""
         result = recfix(data)
         assert not result.success
-        assert any(e.field_name == 'Id' and 'duplicate key' in e.message
-                   for e in result.errors)
+        assert any(
+            e.field_name == "Id" and "duplicate key" in e.message for e in result.errors
+        )
 
     def test_check_singular_field(self):
         """Test detection of duplicate singular field value across records."""
@@ -102,8 +112,9 @@ Name: Jane
 Email: shared@example.com"""
         result = recfix(data)
         assert not result.success
-        assert any(e.field_name == 'Email' and 'singular' in e.message
-                   for e in result.errors)
+        assert any(
+            e.field_name == "Email" and "singular" in e.message for e in result.errors
+        )
 
     def test_check_size_constraint(self):
         """Test detection of size constraint violation."""
@@ -117,7 +128,7 @@ Name: Jane
 Name: Bob"""
         result = recfix(data)
         assert not result.success
-        assert any('size' in e.message for e in result.errors)
+        assert any("size" in e.message for e in result.errors)
 
     def test_check_size_constraint_equal(self):
         """Test size constraint with equality."""
@@ -150,7 +161,7 @@ Name: John
 Age: -5"""
         result = recfix(data)
         assert not result.success
-        assert any('constraint violated' in e.message for e in result.errors)
+        assert any("constraint violated" in e.message for e in result.errors)
 
 
 class TestRecfixTypeValidation:
@@ -175,7 +186,7 @@ Id: 1
 Count: abc"""
         result = recfix(data)
         assert not result.success
-        assert any('expected integer' in e.message for e in result.errors)
+        assert any("expected integer" in e.message for e in result.errors)
 
     def test_type_int_hex(self):
         """Test hexadecimal integer."""
@@ -226,7 +237,7 @@ Id: 1
 Priority: 10"""
         result = recfix(data)
         assert not result.success
-        assert any('out of range' in e.message for e in result.errors)
+        assert any("out of range" in e.message for e in result.errors)
 
     def test_type_range_single_bound(self):
         """Test range with single bound (0 to N)."""
@@ -258,7 +269,7 @@ Title: First line
 + Second line"""
         result = recfix(data)
         assert not result.success
-        assert any('single line' in e.message for e in result.errors)
+        assert any("single line" in e.message for e in result.errors)
 
     def test_type_bool_valid(self):
         """Test valid bool type."""
@@ -299,7 +310,7 @@ Id: 1
 Status: unknown"""
         result = recfix(data)
         assert not result.success
-        assert any('not in enum' in e.message for e in result.errors)
+        assert any("not in enum" in e.message for e in result.errors)
 
     def test_type_email_valid(self):
         """Test valid email type."""
@@ -348,8 +359,8 @@ Name: Alice
 Name: Bob"""
         result = recfix(data, sort=True)
         assert result.success
-        names = [r.get_field('Name') for r in result.record_sets[0].records]
-        assert names == ['Alice', 'Bob', 'Charlie']
+        names = [r.get_field("Name") for r in result.record_sets[0].records]
+        assert names == ["Alice", "Bob", "Charlie"]
 
     def test_sort_by_integer(self):
         """Test sorting records by integer field."""
@@ -367,8 +378,8 @@ Id: 2
 Name: Second"""
         result = recfix(data, sort=True)
         assert result.success
-        ids = [r.get_field('Id') for r in result.record_sets[0].records]
-        assert ids == ['1', '2', '3']
+        ids = [r.get_field("Id") for r in result.record_sets[0].records]
+        assert ids == ["1", "2", "3"]
 
     def test_sort_by_multiple_fields(self):
         """Test sorting records by multiple fields."""
@@ -386,11 +397,11 @@ Name: Alpha"""
         result = recfix(data, sort=True)
         assert result.success
         records = result.record_sets[0].records
-        assert records[0].get_field('Category') == 'A'
-        assert records[0].get_field('Name') == 'Alpha'
-        assert records[1].get_field('Category') == 'A'
-        assert records[1].get_field('Name') == 'Beta'
-        assert records[2].get_field('Category') == 'B'
+        assert records[0].get_field("Category") == "A"
+        assert records[0].get_field("Name") == "Alpha"
+        assert records[1].get_field("Category") == "A"
+        assert records[1].get_field("Name") == "Beta"
+        assert records[2].get_field("Category") == "B"
 
     def test_sort_with_missing_values(self):
         """Test sorting with records missing the sort field."""
@@ -406,9 +417,9 @@ Name: Alice"""
         assert result.success
         # Empty string sorts first
         records = result.record_sets[0].records
-        assert records[0].get_field('Name') is None  # Missing field
-        assert records[1].get_field('Name') == 'Alice'
-        assert records[2].get_field('Name') == 'Charlie'
+        assert records[0].get_field("Name") is None  # Missing field
+        assert records[1].get_field("Name") == "Alice"
+        assert records[2].get_field("Name") == "Charlie"
 
     def test_sort_preserves_without_sort_field(self):
         """Test that records are unchanged without %sort field."""
@@ -421,9 +432,9 @@ Name: Alice
 Name: Bob"""
         result = recfix(data, sort=True)
         assert result.success
-        names = [r.get_field('Name') for r in result.record_sets[0].records]
+        names = [r.get_field("Name") for r in result.record_sets[0].records]
         # Should be unchanged
-        assert names == ['Charlie', 'Alice', 'Bob']
+        assert names == ["Charlie", "Alice", "Bob"]
 
 
 class TestRecfixEncryption:
@@ -437,12 +448,12 @@ class TestRecfixEncryption:
 Name: John
 Password: secret123"""
         # First encrypt (skip checking since the field is not yet encrypted)
-        result = recfix(data, check=False, encrypt=True, password='mykey')
+        result = recfix(data, check=False, encrypt=True, password="mykey")
         assert result.success
         record = result.record_sets[0].records[0]
-        password_val = record.get_field('Password')
-        assert password_val.startswith('encrypted-')
-        assert password_val != 'secret123'
+        password_val = record.get_field("Password")
+        assert password_val.startswith("encrypted-")
+        assert password_val != "secret123"
 
     def test_decrypt_confidential_field(self):
         """Test decrypting a confidential field."""
@@ -452,13 +463,15 @@ Password: secret123"""
 Name: John
 Password: secret123"""
         # First encrypt
-        encrypted_result = recfix(data, check=False, encrypt=True, password='mykey')
+        encrypted_result = recfix(data, check=False, encrypt=True, password="mykey")
         encrypted_data = format_recfix_output(encrypted_result)
 
         # Then decrypt
-        decrypted_result = recfix(encrypted_data, check=False, decrypt=True, password='mykey')
+        decrypted_result = recfix(
+            encrypted_data, check=False, decrypt=True, password="mykey"
+        )
         record = decrypted_result.record_sets[0].records[0]
-        assert record.get_field('Password') == 'secret123'
+        assert record.get_field("Password") == "secret123"
 
     def test_encrypt_without_password(self):
         """Test that encryption requires a password."""
@@ -469,7 +482,7 @@ Name: John
 Password: secret"""
         result = recfix(data, check=False, encrypt=True)
         assert not result.success
-        assert any('password required' in e.message for e in result.errors)
+        assert any("password required" in e.message for e in result.errors)
 
     def test_encrypt_already_encrypted_without_force(self):
         """Test that encrypting already encrypted field fails without force."""
@@ -478,8 +491,8 @@ Password: secret"""
 
 Name: John
 Password: encrypted-abc123"""
-        result = recfix(data, check=False, encrypt=True, password='mykey')
-        assert any('already encrypted' in e.message for e in result.errors)
+        result = recfix(data, check=False, encrypt=True, password="mykey")
+        assert any("already encrypted" in e.message for e in result.errors)
 
     def test_encrypt_already_encrypted_with_force(self):
         """Test that encrypting already encrypted field works with force."""
@@ -489,13 +502,15 @@ Password: encrypted-abc123"""
 Name: John
 Password: secret123"""
         # First encrypt
-        encrypted_result = recfix(data, check=False, encrypt=True, password='mykey')
+        encrypted_result = recfix(data, check=False, encrypt=True, password="mykey")
         encrypted_data = format_recfix_output(encrypted_result)
 
         # Re-encrypt with force
-        result = recfix(encrypted_data, check=False, encrypt=True, password='newkey', force=True)
+        result = recfix(
+            encrypted_data, check=False, encrypt=True, password="newkey", force=True
+        )
         record = result.record_sets[0].records[0]
-        assert record.get_field('Password').startswith('encrypted-')
+        assert record.get_field("Password").startswith("encrypted-")
 
     def test_check_unencrypted_confidential_field(self):
         """Test that check mode flags unencrypted confidential fields."""
@@ -506,7 +521,7 @@ Name: John
 Password: notencrypted"""
         result = recfix(data, check=True)
         assert not result.success
-        assert any('not encrypted' in e.message for e in result.errors)
+        assert any("not encrypted" in e.message for e in result.errors)
 
 
 class TestRecfixAuto:
@@ -524,8 +539,8 @@ Name: Second
 
 Name: Third"""
         result = recfix(data, check=False, auto=True)
-        ids = [r.get_field('Id') for r in result.record_sets[0].records]
-        assert ids == ['0', '1', '2']
+        ids = [r.get_field("Id") for r in result.record_sets[0].records]
+        assert ids == ["0", "1", "2"]
 
     def test_auto_preserves_existing(self):
         """Test that auto generation preserves existing values."""
@@ -541,10 +556,10 @@ Name: Second
 Id: 10
 Name: Third"""
         result = recfix(data, check=False, auto=True)
-        ids = [r.get_field('Id') for r in result.record_sets[0].records]
-        assert ids[0] == '5'
-        assert ids[1] == '11'  # Max existing is 10, so next is 11
-        assert ids[2] == '10'
+        ids = [r.get_field("Id") for r in result.record_sets[0].records]
+        assert ids[0] == "5"
+        assert ids[1] == "11"  # Max existing is 10, so next is 11
+        assert ids[2] == "10"
 
     def test_auto_uuid(self):
         """Test auto-generating UUID fields."""
@@ -556,7 +571,7 @@ Name: First
 
 Name: Second"""
         result = recfix(data, check=False, auto=True)
-        uuids = [r.get_field('Uuid') for r in result.record_sets[0].records]
+        uuids = [r.get_field("Uuid") for r in result.record_sets[0].records]
         assert len(uuids) == 2
         assert all(u is not None and len(u) == 36 for u in uuids)
         # UUIDs should be unique
@@ -574,9 +589,9 @@ Name: John
 Phone: 123"""
         result = recfix(data)
         output = format_recfix_output(result)
-        assert '%rec: Contact' in output
-        assert 'Name: John' in output
-        assert 'Phone: 123' in output
+        assert "%rec: Contact" in output
+        assert "Name: John" in output
+        assert "Phone: 123" in output
 
     def test_format_multiple_record_sets(self):
         """Test formatting multiple record sets."""
@@ -589,8 +604,8 @@ Name: John
 Title: Box"""
         result = recfix(data)
         output = format_recfix_output(result)
-        assert '%rec: Contact' in output
-        assert '%rec: Item' in output
+        assert "%rec: Contact" in output
+        assert "%rec: Item" in output
 
 
 class TestRecfixResultAPI:
@@ -610,22 +625,18 @@ Name: John"""
         # Warnings don't cause failure - currently our implementation
         # only produces errors, but the API supports warnings
         result = RecfixResult(
-            errors=[RecfixError(
-                severity=ErrorSeverity.WARNING,
-                message="test warning"
-            )],
-            record_sets=[]
+            errors=[
+                RecfixError(severity=ErrorSeverity.WARNING, message="test warning")
+            ],
+            record_sets=[],
         )
         assert result.success  # Warnings don't cause failure
 
     def test_failure_with_errors(self):
         """Test success property with errors."""
         result = RecfixResult(
-            errors=[RecfixError(
-                severity=ErrorSeverity.ERROR,
-                message="test error"
-            )],
-            record_sets=[]
+            errors=[RecfixError(severity=ErrorSeverity.ERROR, message="test error")],
+            record_sets=[],
         )
         assert not result.success
 
@@ -638,10 +649,10 @@ Name: John"""
                     message="missing field",
                     record_type="Contact",
                     record_index=0,
-                    field_name="Email"
+                    field_name="Email",
                 )
             ],
-            record_sets=[]
+            record_sets=[],
         )
         formatted = result.format_errors()
         assert "error:" in formatted
@@ -697,11 +708,11 @@ Name: Bob"""
         records = result.record_sets[0].records
 
         # Should be sorted by name
-        names = [r.get_field('Name') for r in records]
-        assert names == ['Alice', 'Bob', 'Charlie']
+        names = [r.get_field("Name") for r in records]
+        assert names == ["Alice", "Bob", "Charlie"]
 
         # Should have auto-generated IDs
-        ids = [r.get_field('Id') for r in records]
+        ids = [r.get_field("Id") for r in records]
         assert all(i is not None for i in ids)
 
     def test_check_blocks_destructive_ops_on_error(self):
@@ -725,5 +736,5 @@ Id: 2
 Id: 1"""  # Missing mandatory Name field but force anyway
         result = recfix(data, check=True, sort=True, force=True)
         # Sort should be applied despite errors
-        ids = [r.get_field('Id') for r in result.record_sets[0].records]
-        assert ids == ['1', '2']  # Sorted
+        ids = [r.get_field("Id") for r in result.record_sets[0].records]
+        assert ids == ["1", "2"]  # Sorted

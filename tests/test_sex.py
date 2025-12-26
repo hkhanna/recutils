@@ -1,10 +1,7 @@
 """Tests for selection expressions (SEX) parser and evaluator."""
 
 from recutils.parser import Record, Field
-from recutils.sex import (
-    Lexer, TokenType,
-    evaluate_sex
-)
+from recutils.sex import Lexer, TokenType, evaluate_sex
 
 
 def make_record(**fields) -> Record:
@@ -62,13 +59,13 @@ class TestLexer:
         lexer = Lexer("'Hello World'")
         tokens = lexer.tokenize()
         assert tokens[0].type == TokenType.STRING
-        assert tokens[0].value == 'Hello World'
+        assert tokens[0].value == "Hello World"
 
     def test_string_double_quotes(self):
         lexer = Lexer('"Hello World"')
         tokens = lexer.tokenize()
         assert tokens[0].type == TokenType.STRING
-        assert tokens[0].value == 'Hello World'
+        assert tokens[0].value == "Hello World"
 
     def test_string_with_escaped_quote(self):
         lexer = Lexer(r"'It\'s a test'")
@@ -79,19 +76,36 @@ class TestLexer:
         lexer = Lexer("Name")
         tokens = lexer.tokenize()
         assert tokens[0].type == TokenType.FIELD
-        assert tokens[0].value == 'Name'
+        assert tokens[0].value == "Name"
 
     def test_operators(self):
         lexer = Lexer("&& || ! => < > <= >= = != << >> == ~ & + - * / % # ? :")
         tokens = lexer.tokenize()
         expected_types = [
-            TokenType.AND, TokenType.OR, TokenType.NOT, TokenType.IMPLIES,
-            TokenType.LT, TokenType.GT, TokenType.LE, TokenType.GE,
-            TokenType.EQ, TokenType.NE, TokenType.DATE_BEFORE, TokenType.DATE_AFTER,
-            TokenType.DATE_SAME, TokenType.MATCH, TokenType.CONCAT,
-            TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH,
-            TokenType.PERCENT, TokenType.HASH, TokenType.QUESTION, TokenType.COLON,
-            TokenType.EOF
+            TokenType.AND,
+            TokenType.OR,
+            TokenType.NOT,
+            TokenType.IMPLIES,
+            TokenType.LT,
+            TokenType.GT,
+            TokenType.LE,
+            TokenType.GE,
+            TokenType.EQ,
+            TokenType.NE,
+            TokenType.DATE_BEFORE,
+            TokenType.DATE_AFTER,
+            TokenType.DATE_SAME,
+            TokenType.MATCH,
+            TokenType.CONCAT,
+            TokenType.PLUS,
+            TokenType.MINUS,
+            TokenType.STAR,
+            TokenType.SLASH,
+            TokenType.PERCENT,
+            TokenType.HASH,
+            TokenType.QUESTION,
+            TokenType.COLON,
+            TokenType.EOF,
         ]
         for i, expected in enumerate(expected_types):
             assert tokens[i].type == expected
@@ -198,7 +212,9 @@ class TestParserAndEvaluator:
         assert evaluate_sex("(A || B) && C", record) is True
         # Different grouping
         record = make_record(A=0, B=0, C=1)
-        assert evaluate_sex("A || B && C", record) is False  # 0 || (0 && 1) = 0 || 0 = 0
+        assert (
+            evaluate_sex("A || B && C", record) is False
+        )  # 0 || (0 && 1) = 0 || 0 = 0
 
     def test_comparison_operators(self):
         record = make_record(Val=50)
@@ -215,9 +231,15 @@ class TestCaseInsensitivity:
 
     def test_case_insensitive_string_match(self):
         record = make_record(Name="John Smith")
-        assert evaluate_sex("Name = 'john smith'", record, case_insensitive=True) is True
-        assert evaluate_sex("Name = 'JOHN SMITH'", record, case_insensitive=True) is True
-        assert evaluate_sex("Name = 'john smith'", record, case_insensitive=False) is False
+        assert (
+            evaluate_sex("Name = 'john smith'", record, case_insensitive=True) is True
+        )
+        assert (
+            evaluate_sex("Name = 'JOHN SMITH'", record, case_insensitive=True) is True
+        )
+        assert (
+            evaluate_sex("Name = 'john smith'", record, case_insensitive=False) is False
+        )
 
     def test_case_insensitive_regex(self):
         record = make_record(Email="FOO@BAR.ORG")

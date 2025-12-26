@@ -14,6 +14,7 @@ from .sex import evaluate_sex
 @dataclass
 class RecselResult:
     """Result of a recsel operation."""
+
     records: list[Record]
     descriptor: Record | None = None
 
@@ -23,16 +24,16 @@ class RecselResult:
             parts.append(str(self.descriptor))
         for record in self.records:
             parts.append(str(record))
-        return '\n\n'.join(parts)
+        return "\n\n".join(parts)
 
 
 def _parse_indexes(indexes_str: str) -> list[int]:
     """Parse index specification like '0,2,4-9' into a list of indexes."""
     result = set()
-    for part in indexes_str.split(','):
+    for part in indexes_str.split(","):
         part = part.strip()
-        if '-' in part:
-            range_parts = part.split('-', 1)
+        if "-" in part:
+            range_parts = part.split("-", 1)
             start = int(range_parts[0])
             end = int(range_parts[1])
             for i in range(start, end + 1):
@@ -48,10 +49,10 @@ def _parse_field_list(field_list: str) -> list[tuple[str, str | None]]:
     Returns list of (field_name, alias) tuples.
     """
     result = []
-    for part in field_list.split(','):
+    for part in field_list.split(","):
         part = part.strip()
-        if ':' in part:
-            field_parts = part.split(':', 1)
+        if ":" in part:
+            field_parts = part.split(":", 1)
             # Handle subscripts like Email[0]
             field_name = field_parts[0].strip()
             alias = field_parts[1].strip()
@@ -64,7 +65,7 @@ def _parse_field_list(field_list: str) -> list[tuple[str, str | None]]:
 
 def _extract_field_with_subscript(field_spec: str) -> tuple[str, int | None]:
     """Parse field name with optional subscript like 'Email[0]'."""
-    match = re.match(r'^([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)\]$', field_spec)
+    match = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\[(\d+)\]$", field_spec)
     if match:
         return match.group(1), int(match.group(2))
     return field_spec, None
@@ -88,7 +89,9 @@ def _select_fields(record: Record, fields: list[tuple[str, str | None]]) -> list
     return result
 
 
-def _quick_match(record: Record, substring: str, case_insensitive: bool = False) -> bool:
+def _quick_match(
+    record: Record, substring: str, case_insensitive: bool = False
+) -> bool:
     """Check if any field value contains the substring."""
     search_str = substring.lower() if case_insensitive else substring
     for field in record.fields:
@@ -98,7 +101,9 @@ def _quick_match(record: Record, substring: str, case_insensitive: bool = False)
     return False
 
 
-def _sort_records(records: list[Record], sort_fields: list[str], record_set: RecordSet | None = None) -> list[Record]:
+def _sort_records(
+    records: list[Record], sort_fields: list[str], record_set: RecordSet | None = None
+) -> list[Record]:
     """Sort records by the specified fields."""
     if not sort_fields:
         return records
@@ -108,10 +113,10 @@ def _sort_records(records: list[Record], sort_fields: list[str], record_set: Rec
         for field_name in sort_fields:
             value = record.get_field(field_name)
             if value is None:
-                value = ''
+                value = ""
             # Try numeric sort first
             try:
-                if '.' in value:
+                if "." in value:
                     keys.append((0, float(value), value))
                 else:
                     keys.append((0, int(value), value))
@@ -131,7 +136,7 @@ def _group_records(records: list[Record], group_fields: list[str]) -> list[Recor
 
     for record in records:
         # Create group key from field values
-        key = tuple(record.get_field(f) or '' for f in group_fields)
+        key = tuple(record.get_field(f) or "" for f in group_fields)
 
         if key not in groups:
             # Create new group record
@@ -209,7 +214,7 @@ def recsel(
         # List of file paths
         all_sets = []
         for path in input_data:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 all_sets.extend(parse_file(f))
         record_sets = all_sets
     else:
@@ -234,7 +239,9 @@ def recsel(
             # Check if there are multiple typed record sets
             typed_sets = [rs for rs in record_sets if rs.record_type]
             if len(typed_sets) > 1:
-                raise ValueError("several record types found. Please use record_type to specify one.")
+                raise ValueError(
+                    "several record types found. Please use record_type to specify one."
+                )
             target_sets = record_sets
 
     # Collect all records from target sets
@@ -255,7 +262,9 @@ def recsel(
 
     # Filter by expression
     if expression:
-        selected = [r for r in selected if evaluate_sex(expression, r, case_insensitive)]
+        selected = [
+            r for r in selected if evaluate_sex(expression, r, case_insensitive)
+        ]
 
     # Filter by quick substring search
     if quick:
@@ -270,14 +279,14 @@ def recsel(
 
     # Group records
     if group_by:
-        group_fields = [f.strip() for f in group_by.split(',')]
+        group_fields = [f.strip() for f in group_by.split(",")]
         selected = _group_records(selected, group_fields)
 
     # Sort records
     sort_fields = []
     if sort:
-        sort_fields = [f.strip() for f in sort.split(',')]
-    elif descriptor and hasattr(descriptor, 'sort_fields') and descriptor.sort_fields:
+        sort_fields = [f.strip() for f in sort.split(",")]
+    elif descriptor and hasattr(descriptor, "sort_fields") and descriptor.sort_fields:
         sort_fields = descriptor.sort_fields
 
     if sort_fields:
@@ -302,7 +311,7 @@ def recsel(
             for record in selected:
                 selected_fields = _select_fields(record, fields)
                 row_values = [f.value for f in selected_fields]
-                rows.append(' '.join(row_values))
+                rows.append(" ".join(row_values))
             return rows
 
         if print_values:
@@ -312,7 +321,7 @@ def recsel(
                 selected_fields = _select_fields(record, fields)
                 for f in selected_fields:
                     result_lines.append(f.value)
-            return '\n'.join(result_lines) if not collapse else ' '.join(result_lines)
+            return "\n".join(result_lines) if not collapse else " ".join(result_lines)
 
         # print_fields: return records with only selected fields
         output_records = []
@@ -338,7 +347,7 @@ def format_recsel_output(
         return result
 
     if isinstance(result, list):
-        separator = ' ' if collapse else '\n'
+        separator = " " if collapse else "\n"
         return separator.join(result)
 
     # RecselResult
@@ -349,5 +358,5 @@ def format_recsel_output(
     for record in result.records:
         parts.append(str(record))
 
-    separator = '\n' if collapse else '\n\n'
+    separator = "\n" if collapse else "\n\n"
     return separator.join(parts)

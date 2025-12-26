@@ -12,6 +12,7 @@ from .parser import Record
 
 class TokenType(Enum):
     """Token types for selection expressions."""
+
     # Literals
     INTEGER = auto()
     REAL = auto()
@@ -21,35 +22,35 @@ class TokenType(Enum):
     FIELD = auto()
 
     # Operators
-    PLUS = auto()          # +
-    MINUS = auto()         # -
-    STAR = auto()          # *
-    SLASH = auto()         # /
-    PERCENT = auto()       # %
-    AND = auto()           # &&
-    OR = auto()            # ||
-    NOT = auto()           # !
-    IMPLIES = auto()       # =>
-    LT = auto()            # <
-    GT = auto()            # >
-    LE = auto()            # <=
-    GE = auto()            # >=
-    EQ = auto()            # =
-    NE = auto()            # !=
-    DATE_BEFORE = auto()   # <<
-    DATE_AFTER = auto()    # >>
-    DATE_SAME = auto()     # ==
-    MATCH = auto()         # ~
-    CONCAT = auto()        # &
-    HASH = auto()          # # (field count)
-    QUESTION = auto()      # ?
-    COLON = auto()         # :
+    PLUS = auto()  # +
+    MINUS = auto()  # -
+    STAR = auto()  # *
+    SLASH = auto()  # /
+    PERCENT = auto()  # %
+    AND = auto()  # &&
+    OR = auto()  # ||
+    NOT = auto()  # !
+    IMPLIES = auto()  # =>
+    LT = auto()  # <
+    GT = auto()  # >
+    LE = auto()  # <=
+    GE = auto()  # >=
+    EQ = auto()  # =
+    NE = auto()  # !=
+    DATE_BEFORE = auto()  # <<
+    DATE_AFTER = auto()  # >>
+    DATE_SAME = auto()  # ==
+    MATCH = auto()  # ~
+    CONCAT = auto()  # &
+    HASH = auto()  # # (field count)
+    QUESTION = auto()  # ?
+    COLON = auto()  # :
 
     # Grouping
-    LPAREN = auto()        # (
-    RPAREN = auto()        # )
-    LBRACKET = auto()      # [
-    RBRACKET = auto()      # ]
+    LPAREN = auto()  # (
+    RPAREN = auto()  # )
+    LBRACKET = auto()  # [
+    RBRACKET = auto()  # ]
 
     # Special
     EOF = auto()
@@ -58,6 +59,7 @@ class TokenType(Enum):
 @dataclass
 class Token:
     """A token in a selection expression."""
+
     type: TokenType
     value: Any
     position: int
@@ -65,6 +67,7 @@ class Token:
 
 class LexerError(Exception):
     """Error during lexing."""
+
     pass
 
 
@@ -100,14 +103,14 @@ class Lexer:
             ch = self._peek()
             if ch is None:
                 raise LexerError(f"Unterminated string at position {self.pos}")
-            if ch == '\\':
+            if ch == "\\":
                 self._advance()
                 escaped = self._advance()
-                if escaped == 'n':
-                    result.append('\n')
-                elif escaped == 't':
-                    result.append('\t')
-                elif escaped in ('"', "'", '\\'):
+                if escaped == "n":
+                    result.append("\n")
+                elif escaped == "t":
+                    result.append("\t")
+                elif escaped in ('"', "'", "\\"):
                     result.append(escaped)
                 else:
                     result.append(escaped)
@@ -116,47 +119,51 @@ class Lexer:
                 break
             else:
                 result.append(self._advance())
-        return ''.join(result)
+        return "".join(result)
 
     def _read_number(self) -> Token:
         start_pos = self.pos
         result = []
 
         # Check for sign
-        if self._peek() in ('+', '-'):
+        if self._peek() in ("+", "-"):
             result.append(self._advance())
 
         # Check for hex or octal
-        if self._peek() == '0' and self._peek(1) in ('x', 'X'):
+        if self._peek() == "0" and self._peek(1) in ("x", "X"):
             result.append(self._advance())  # 0
             result.append(self._advance())  # x
-            while self._peek() and self._peek() in '0123456789abcdefABCDEF':
+            while self._peek() and self._peek() in "0123456789abcdefABCDEF":
                 result.append(self._advance())
-            return Token(TokenType.INTEGER, int(''.join(result), 16), start_pos)
+            return Token(TokenType.INTEGER, int("".join(result), 16), start_pos)
 
         # Regular number (may be octal if starts with 0)
         is_real = False
-        while self._peek() and (self._peek().isdigit() or self._peek() == '.'):
-            if self._peek() == '.':
+        while self._peek() and (self._peek().isdigit() or self._peek() == "."):
+            if self._peek() == ".":
                 if is_real:
                     break  # Second dot, stop
                 is_real = True
             result.append(self._advance())
 
-        value_str = ''.join(result)
+        value_str = "".join(result)
         if is_real:
             return Token(TokenType.REAL, float(value_str), start_pos)
         else:
             # Check for octal (starts with 0 and has only 0-7)
-            if value_str.startswith('0') and len(value_str) > 1 and all(c in '01234567' for c in value_str[1:]):
+            if (
+                value_str.startswith("0")
+                and len(value_str) > 1
+                and all(c in "01234567" for c in value_str[1:])
+            ):
                 return Token(TokenType.INTEGER, int(value_str, 8), start_pos)
             return Token(TokenType.INTEGER, int(value_str), start_pos)
 
     def _read_field(self) -> str:
         result = []
-        while self._peek() and (self._peek().isalnum() or self._peek() == '_'):
+        while self._peek() and (self._peek().isalnum() or self._peek() == "_"):
             result.append(self._advance())
-        return ''.join(result)
+        return "".join(result)
 
     def next_token(self) -> Token:
         self._skip_whitespace()
@@ -172,11 +179,15 @@ class Lexer:
             return Token(TokenType.STRING, self._read_string(ch), start_pos)
 
         # Numbers (including those starting with . like .12)
-        if ch.isdigit() or (ch == '.' and self._peek(1) and self._peek(1).isdigit()):
+        if ch.isdigit() or (ch == "." and self._peek(1) and self._peek(1).isdigit()):
             return self._read_number()
 
         # Negative numbers
-        if ch == '-' and self._peek(1) and (self._peek(1).isdigit() or self._peek(1) == '.'):
+        if (
+            ch == "-"
+            and self._peek(1)
+            and (self._peek(1).isdigit() or self._peek(1) == ".")
+        ):
             return self._read_number()
 
         # Field names (identifiers)
@@ -186,80 +197,80 @@ class Lexer:
             return Token(TokenType.FIELD, name, start_pos)
 
         # Special field names starting with %
-        if ch == '%' and self._peek(1) and self._peek(1).isalpha():
+        if ch == "%" and self._peek(1) and self._peek(1).isalpha():
             self._advance()  # consume %
-            name = '%' + self._read_field()
+            name = "%" + self._read_field()
             return Token(TokenType.FIELD, name, start_pos)
 
         # Two-character operators
-        two_char = self.text[self.pos:self.pos+2]
-        if two_char == '&&':
+        two_char = self.text[self.pos : self.pos + 2]
+        if two_char == "&&":
             self.pos += 2
-            return Token(TokenType.AND, '&&', start_pos)
-        if two_char == '||':
+            return Token(TokenType.AND, "&&", start_pos)
+        if two_char == "||":
             self.pos += 2
-            return Token(TokenType.OR, '||', start_pos)
-        if two_char == '<=':
+            return Token(TokenType.OR, "||", start_pos)
+        if two_char == "<=":
             self.pos += 2
-            return Token(TokenType.LE, '<=', start_pos)
-        if two_char == '>=':
+            return Token(TokenType.LE, "<=", start_pos)
+        if two_char == ">=":
             self.pos += 2
-            return Token(TokenType.GE, '>=', start_pos)
-        if two_char == '!=':
+            return Token(TokenType.GE, ">=", start_pos)
+        if two_char == "!=":
             self.pos += 2
-            return Token(TokenType.NE, '!=', start_pos)
-        if two_char == '<<':
+            return Token(TokenType.NE, "!=", start_pos)
+        if two_char == "<<":
             self.pos += 2
-            return Token(TokenType.DATE_BEFORE, '<<', start_pos)
-        if two_char == '>>':
+            return Token(TokenType.DATE_BEFORE, "<<", start_pos)
+        if two_char == ">>":
             self.pos += 2
-            return Token(TokenType.DATE_AFTER, '>>', start_pos)
-        if two_char == '==':
+            return Token(TokenType.DATE_AFTER, ">>", start_pos)
+        if two_char == "==":
             self.pos += 2
-            return Token(TokenType.DATE_SAME, '==', start_pos)
-        if two_char == '=>':
+            return Token(TokenType.DATE_SAME, "==", start_pos)
+        if two_char == "=>":
             self.pos += 2
-            return Token(TokenType.IMPLIES, '=>', start_pos)
+            return Token(TokenType.IMPLIES, "=>", start_pos)
 
         # Single-character operators
         self._advance()
         match ch:
-            case '+':
-                return Token(TokenType.PLUS, '+', start_pos)
-            case '-':
-                return Token(TokenType.MINUS, '-', start_pos)
-            case '*':
-                return Token(TokenType.STAR, '*', start_pos)
-            case '/':
-                return Token(TokenType.SLASH, '/', start_pos)
-            case '%':
-                return Token(TokenType.PERCENT, '%', start_pos)
-            case '<':
-                return Token(TokenType.LT, '<', start_pos)
-            case '>':
-                return Token(TokenType.GT, '>', start_pos)
-            case '=':
-                return Token(TokenType.EQ, '=', start_pos)
-            case '!':
-                return Token(TokenType.NOT, '!', start_pos)
-            case '~':
-                return Token(TokenType.MATCH, '~', start_pos)
-            case '&':
-                return Token(TokenType.CONCAT, '&', start_pos)
-            case '#':
-                return Token(TokenType.HASH, '#', start_pos)
-            case '?':
-                return Token(TokenType.QUESTION, '?', start_pos)
-            case ':':
-                return Token(TokenType.COLON, ':', start_pos)
-            case '(':
-                return Token(TokenType.LPAREN, '(', start_pos)
-            case ')':
-                return Token(TokenType.RPAREN, ')', start_pos)
-            case '[':
-                return Token(TokenType.LBRACKET, '[', start_pos)
-            case ']':
-                return Token(TokenType.RBRACKET, ']', start_pos)
+            case "+":
+                return Token(TokenType.PLUS, "+", start_pos)
+            case "-":
+                return Token(TokenType.MINUS, "-", start_pos)
+            case "*":
+                return Token(TokenType.STAR, "*", start_pos)
+            case "/":
+                return Token(TokenType.SLASH, "/", start_pos)
+            case "%":
+                return Token(TokenType.PERCENT, "%", start_pos)
+            case "<":
+                return Token(TokenType.LT, "<", start_pos)
+            case ">":
+                return Token(TokenType.GT, ">", start_pos)
+            case "=":
+                return Token(TokenType.EQ, "=", start_pos)
+            case "!":
+                return Token(TokenType.NOT, "!", start_pos)
+            case "~":
+                return Token(TokenType.MATCH, "~", start_pos)
+            case "&":
+                return Token(TokenType.CONCAT, "&", start_pos)
+            case "#":
+                return Token(TokenType.HASH, "#", start_pos)
+            case "?":
+                return Token(TokenType.QUESTION, "?", start_pos)
+            case ":":
+                return Token(TokenType.COLON, ":", start_pos)
+            case "(":
+                return Token(TokenType.LPAREN, "(", start_pos)
+            case ")":
+                return Token(TokenType.RPAREN, ")", start_pos)
+            case "[":
+                return Token(TokenType.LBRACKET, "[", start_pos)
+            case "]":
+                return Token(TokenType.RBRACKET, "]", start_pos)
             case _:
                 raise LexerError(f"Unexpected character '{ch}' at position {start_pos}")
 
@@ -277,6 +288,7 @@ class Lexer:
 @dataclass
 class ASTNode:
     """Base class for AST nodes."""
+
     pass
 
 
@@ -323,6 +335,7 @@ class TernaryNode(ASTNode):
 
 class ParseError(Exception):
     """Error during parsing."""
+
     pass
 
 
@@ -346,7 +359,9 @@ class Parser:
     def _expect(self, token_type: TokenType) -> Token:
         token = self._current()
         if token.type != token_type:
-            raise ParseError(f"Expected {token_type}, got {token.type} at position {token.position}")
+            raise ParseError(
+                f"Expected {token_type}, got {token.type} at position {token.position}"
+            )
         return self._advance()
 
     def parse(self) -> ASTNode:
@@ -355,7 +370,9 @@ class Parser:
             raise ParseError("Empty expression")
         node = self._parse_ternary()
         if self._current().type != TokenType.EOF:
-            raise ParseError(f"Unexpected token {self._current().type} at position {self._current().position}")
+            raise ParseError(
+                f"Unexpected token {self._current().type} at position {self._current().position}"
+            )
         return node
 
     def _parse_ternary(self) -> ASTNode:
@@ -375,7 +392,7 @@ class Parser:
         if self._current().type == TokenType.IMPLIES:
             self._advance()
             right = self._parse_implies()
-            return BinaryOpNode('=>', left, right)
+            return BinaryOpNode("=>", left, right)
         return left
 
     def _parse_or(self) -> ASTNode:
@@ -384,7 +401,7 @@ class Parser:
         while self._current().type == TokenType.OR:
             self._advance()
             right = self._parse_and()
-            left = BinaryOpNode('||', left, right)
+            left = BinaryOpNode("||", left, right)
         return left
 
     def _parse_and(self) -> ASTNode:
@@ -393,23 +410,23 @@ class Parser:
         while self._current().type == TokenType.AND:
             self._advance()
             right = self._parse_comparison()
-            left = BinaryOpNode('&&', left, right)
+            left = BinaryOpNode("&&", left, right)
         return left
 
     def _parse_comparison(self) -> ASTNode:
         """Parse comparison operators: <, >, <=, >=, =, !=, <<, >>, ==, ~"""
         left = self._parse_additive()
         comparison_ops = {
-            TokenType.LT: '<',
-            TokenType.GT: '>',
-            TokenType.LE: '<=',
-            TokenType.GE: '>=',
-            TokenType.EQ: '=',
-            TokenType.NE: '!=',
-            TokenType.DATE_BEFORE: '<<',
-            TokenType.DATE_AFTER: '>>',
-            TokenType.DATE_SAME: '==',
-            TokenType.MATCH: '~',
+            TokenType.LT: "<",
+            TokenType.GT: ">",
+            TokenType.LE: "<=",
+            TokenType.GE: ">=",
+            TokenType.EQ: "=",
+            TokenType.NE: "!=",
+            TokenType.DATE_BEFORE: "<<",
+            TokenType.DATE_AFTER: ">>",
+            TokenType.DATE_SAME: "==",
+            TokenType.MATCH: "~",
         }
         if self._current().type in comparison_ops:
             op = comparison_ops[self._current().type]
@@ -421,8 +438,14 @@ class Parser:
     def _parse_additive(self) -> ASTNode:
         """Parse additive operators: +, -, &"""
         left = self._parse_multiplicative()
-        while self._current().type in (TokenType.PLUS, TokenType.MINUS, TokenType.CONCAT):
-            op = {TokenType.PLUS: '+', TokenType.MINUS: '-', TokenType.CONCAT: '&'}[self._current().type]
+        while self._current().type in (
+            TokenType.PLUS,
+            TokenType.MINUS,
+            TokenType.CONCAT,
+        ):
+            op = {TokenType.PLUS: "+", TokenType.MINUS: "-", TokenType.CONCAT: "&"}[
+                self._current().type
+            ]
             self._advance()
             right = self._parse_multiplicative()
             left = BinaryOpNode(op, left, right)
@@ -431,8 +454,14 @@ class Parser:
     def _parse_multiplicative(self) -> ASTNode:
         """Parse multiplicative operators: *, /, %"""
         left = self._parse_unary()
-        while self._current().type in (TokenType.STAR, TokenType.SLASH, TokenType.PERCENT):
-            op = {TokenType.STAR: '*', TokenType.SLASH: '/', TokenType.PERCENT: '%'}[self._current().type]
+        while self._current().type in (
+            TokenType.STAR,
+            TokenType.SLASH,
+            TokenType.PERCENT,
+        ):
+            op = {TokenType.STAR: "*", TokenType.SLASH: "/", TokenType.PERCENT: "%"}[
+                self._current().type
+            ]
             self._advance()
             right = self._parse_unary()
             left = BinaryOpNode(op, left, right)
@@ -443,11 +472,11 @@ class Parser:
         if self._current().type == TokenType.NOT:
             self._advance()
             operand = self._parse_unary()
-            return UnaryOpNode('!', operand)
+            return UnaryOpNode("!", operand)
         if self._current().type == TokenType.MINUS:
             self._advance()
             operand = self._parse_unary()
-            return UnaryOpNode('-', operand)
+            return UnaryOpNode("-", operand)
         if self._current().type == TokenType.HASH:
             self._advance()
             field_token = self._expect(TokenType.FIELD)
@@ -491,6 +520,7 @@ class Parser:
 
 class EvalError(Exception):
     """Error during evaluation."""
+
     pass
 
 
@@ -507,7 +537,7 @@ class Evaluator:
             return value
         if isinstance(value, str):
             try:
-                if '.' in value:
+                if "." in value:
                     return float(value)
                 return int(value)
             except ValueError:
@@ -530,7 +560,7 @@ class Evaluator:
     def _to_string(self, value: Any) -> str:
         """Convert value to string."""
         if value is None:
-            return ''
+            return ""
         if isinstance(value, float):
             if value.is_integer():
                 return str(int(value))
@@ -564,18 +594,18 @@ class Evaluator:
                 values = self.record.get_fields(node.name)
                 if node.subscript < len(values):
                     return values[node.subscript]
-                return ''
+                return ""
             else:
-                return self.record.get_field(node.name) or ''
+                return self.record.get_field(node.name) or ""
 
         if isinstance(node, FieldCountNode):
             return self.record.get_field_count(node.name)
 
         if isinstance(node, UnaryOpNode):
             operand = self.eval(node.operand)
-            if node.op == '!':
+            if node.op == "!":
                 return 0 if self._to_bool(operand) else 1
-            if node.op == '-':
+            if node.op == "-":
                 return -self._to_number(operand)
 
         if isinstance(node, TernaryNode):
@@ -590,72 +620,90 @@ class Evaluator:
             right = self.eval(node.right)
 
             # Arithmetic operators
-            if node.op == '+':
+            if node.op == "+":
                 return self._to_number(left) + self._to_number(right)
-            if node.op == '-':
+            if node.op == "-":
                 return self._to_number(left) - self._to_number(right)
-            if node.op == '*':
+            if node.op == "*":
                 return self._to_number(left) * self._to_number(right)
-            if node.op == '/':
+            if node.op == "/":
                 r = self._to_number(right)
                 if r == 0:
                     return 0
                 return int(self._to_number(left) / r)
-            if node.op == '%':
+            if node.op == "%":
                 r = self._to_number(right)
                 if r == 0:
                     return 0
                 return self._to_number(left) % r
 
             # Boolean operators
-            if node.op == '&&':
+            if node.op == "&&":
                 return 1 if self._to_bool(left) and self._to_bool(right) else 0
-            if node.op == '||':
+            if node.op == "||":
                 return 1 if self._to_bool(left) or self._to_bool(right) else 0
-            if node.op == '=>':
+            if node.op == "=>":
                 # A => B is equivalent to !A || (A && B)
                 a = self._to_bool(left)
                 b = self._to_bool(right)
                 return 1 if (not a) or (a and b) else 0
 
             # Comparison operators
-            if node.op == '<':
+            if node.op == "<":
                 return 1 if self._to_number(left) < self._to_number(right) else 0
-            if node.op == '>':
+            if node.op == ">":
                 return 1 if self._to_number(left) > self._to_number(right) else 0
-            if node.op == '<=':
+            if node.op == "<=":
                 return 1 if self._to_number(left) <= self._to_number(right) else 0
-            if node.op == '>=':
+            if node.op == ">=":
                 return 1 if self._to_number(left) >= self._to_number(right) else 0
-            if node.op == '=':
+            if node.op == "=":
                 # String comparison
-                return 1 if self._compare_strings(self._to_string(left), self._to_string(right)) else 0
-            if node.op == '!=':
-                return 1 if not self._compare_strings(self._to_string(left), self._to_string(right)) else 0
+                return (
+                    1
+                    if self._compare_strings(
+                        self._to_string(left), self._to_string(right)
+                    )
+                    else 0
+                )
+            if node.op == "!=":
+                return (
+                    1
+                    if not self._compare_strings(
+                        self._to_string(left), self._to_string(right)
+                    )
+                    else 0
+                )
 
             # String operators
-            if node.op == '&':
+            if node.op == "&":
                 return self._to_string(left) + self._to_string(right)
-            if node.op == '~':
-                return 1 if self._match_regex(self._to_string(left), self._to_string(right)) else 0
+            if node.op == "~":
+                return (
+                    1
+                    if self._match_regex(self._to_string(left), self._to_string(right))
+                    else 0
+                )
 
             # Date comparison operators (simplified - just string comparison for now)
-            if node.op in ('<<', '>>', '=='):
+            if node.op in ("<<", ">>", "=="):
                 # TODO: Implement proper date parsing and comparison
                 # For now, treat as string comparison
                 l = self._to_string(left)
                 r = self._to_string(right)
-                if node.op == '<<':
+                if node.op == "<<":
                     return 1 if l < r else 0
-                if node.op == '>>':
+                if node.op == ">>":
                     return 1 if l > r else 0
-                if node.op == '==':
+                if node.op == "==":
                     return 1 if l == r else 0
 
         raise EvalError(f"Cannot evaluate node: {node}")
 
 
-def evaluate_sex(expression: str, record: Record, case_insensitive: bool = False) -> bool:
+def evaluate_sex(
+    expression: str, record: Record, case_insensitive: bool = False
+) -> bool:
     """Evaluate a selection expression against a record.
 
     Returns True if the record matches the expression.

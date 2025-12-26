@@ -8,36 +8,38 @@ from typing import TextIO
 
 
 # Field name regex: starts with letter or %, followed by alphanumeric or underscore
-FIELD_NAME_RE = re.compile(r'^([a-zA-Z%][a-zA-Z0-9_]*):\s?(.*)$')
+FIELD_NAME_RE = re.compile(r"^([a-zA-Z%][a-zA-Z0-9_]*):\s?(.*)$")
 
 # Continuation line: starts with + and optional space
-CONTINUATION_RE = re.compile(r'^\+\s?(.*)$')
+CONTINUATION_RE = re.compile(r"^\+\s?(.*)$")
 
 # Line continuation (backslash at end of line)
-LINE_CONTINUATION_RE = re.compile(r'^(.*)\\$')
+LINE_CONTINUATION_RE = re.compile(r"^(.*)\\$")
 
 
 @dataclass
 class Field:
     """A field in a record."""
+
     name: str
     value: str
 
     def __str__(self) -> str:
         # Encode multi-line values
-        lines = self.value.split('\n')
+        lines = self.value.split("\n")
         if len(lines) == 1:
             return f"{self.name}: {self.value}"
         else:
             result = [f"{self.name}: {lines[0]}"]
             for line in lines[1:]:
                 result.append(f"+ {line}")
-            return '\n'.join(result)
+            return "\n".join(result)
 
 
 @dataclass
 class Record:
     """A record containing fields."""
+
     fields: list[Field] = dataclass_field(default_factory=list)
 
     def get_field(self, name: str) -> str | None:
@@ -64,7 +66,7 @@ class Record:
         return {f.name for f in self.fields}
 
     def __str__(self) -> str:
-        return '\n'.join(str(f) for f in self.fields)
+        return "\n".join(str(f) for f in self.fields)
 
 
 @dataclass
@@ -74,7 +76,7 @@ class RecordDescriptor(Record):
     @property
     def record_type(self) -> str | None:
         """Get the type name from %rec field."""
-        rec = self.get_field('%rec')
+        rec = self.get_field("%rec")
         if rec:
             # Type may be followed by URL/path for remote descriptor
             parts = rec.split(None, 1)
@@ -85,19 +87,19 @@ class RecordDescriptor(Record):
     def mandatory_fields(self) -> set[str]:
         """Get the set of mandatory field names."""
         result = set()
-        for value in self.get_fields('%mandatory'):
+        for value in self.get_fields("%mandatory"):
             result.update(value.split())
         return result
 
     @property
     def key_field(self) -> str | None:
         """Get the key field name if specified."""
-        return self.get_field('%key')
+        return self.get_field("%key")
 
     @property
     def sort_fields(self) -> list[str]:
         """Get the list of sort field names."""
-        sort_value = self.get_field('%sort')
+        sort_value = self.get_field("%sort")
         if sort_value:
             return sort_value.split()
         return []
@@ -106,6 +108,7 @@ class RecordDescriptor(Record):
 @dataclass
 class RecordSet:
     """A set of records with an optional descriptor."""
+
     descriptor: RecordDescriptor | None = None
     records: list[Record] = dataclass_field(default_factory=list)
 
@@ -128,7 +131,7 @@ def _parse_lines(lines: list[str]) -> list[Record | RecordDescriptor]:
     def finish_field():
         nonlocal current_field_name, current_field_value_lines
         if current_field_name is not None:
-            value = '\n'.join(current_field_value_lines)
+            value = "\n".join(current_field_value_lines)
             current_fields.append(Field(current_field_name, value))
             current_field_name = None
             current_field_value_lines = []
@@ -138,7 +141,7 @@ def _parse_lines(lines: list[str]) -> list[Record | RecordDescriptor]:
         finish_field()
         if current_fields:
             # Check if this is a descriptor (has %rec field)
-            is_descriptor = any(f.name == '%rec' for f in current_fields)
+            is_descriptor = any(f.name == "%rec" for f in current_fields)
             if is_descriptor:
                 result.append(RecordDescriptor(fields=current_fields))
             else:
@@ -147,7 +150,7 @@ def _parse_lines(lines: list[str]) -> list[Record | RecordDescriptor]:
 
     for line in lines:
         # Skip comment lines
-        if line.startswith('#'):
+        if line.startswith("#"):
             continue
 
         # Handle line continuation from previous line
@@ -222,7 +225,7 @@ def _organize_record_sets(items: list[Record | RecordDescriptor]) -> list[Record
 
 def parse(text: str) -> list[RecordSet]:
     """Parse rec format text into record sets."""
-    lines = text.split('\n')
+    lines = text.split("\n")
     items = _parse_lines(lines)
     return _organize_record_sets(items)
 
