@@ -1,7 +1,6 @@
 """Tests for the rec format parser."""
 
-import pytest
-from recutils.parser import parse, Field, Record, RecordDescriptor, RecordSet
+from recutils.parser import parse, Field, Record
 
 
 class TestFieldParsing:

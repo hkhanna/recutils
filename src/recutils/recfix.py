@@ -395,7 +395,7 @@ def _check_record_set(
             if not record.has_field(field_name):
                 errors.append(RecfixError(
                     severity=ErrorSeverity.ERROR,
-                    message=f"missing mandatory field",
+                    message="missing mandatory field",
                     record_type=record_type,
                     record_index=idx,
                     field_name=field_name
@@ -406,7 +406,7 @@ def _check_record_set(
             if record.has_field(field_name):
                 errors.append(RecfixError(
                     severity=ErrorSeverity.ERROR,
-                    message=f"prohibited field present",
+                    message="prohibited field present",
                     record_type=record_type,
                     record_index=idx,
                     field_name=field_name
@@ -418,7 +418,7 @@ def _check_record_set(
                 if field.name not in allowed:
                     errors.append(RecfixError(
                         severity=ErrorSeverity.ERROR,
-                        message=f"field not in allowed list",
+                        message="field not in allowed list",
                         record_type=record_type,
                         record_index=idx,
                         field_name=field.name
@@ -482,7 +482,7 @@ def _check_record_set(
                 if not value.startswith('encrypted-'):
                     errors.append(RecfixError(
                         severity=ErrorSeverity.ERROR,
-                        message=f"confidential field is not encrypted",
+                        message="confidential field is not encrypted",
                         record_type=record_type,
                         record_index=idx,
                         field_name=field_name
