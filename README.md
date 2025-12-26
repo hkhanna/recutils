@@ -5,12 +5,29 @@ A Python implementation of [GNU recutils](https://www.gnu.org/software/recutils/
 ## Installation
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd python-recutils
+pip install python-recutils
+```
 
-# Install with uv
+Or with uv:
+
+```bash
+uv add python-recutils
+```
+
+## Development
+
+To contribute or modify the library:
+
+```bash
+git clone https://github.com/harrykhanna/python-recutils.git
+cd python-recutils
 uv sync
+```
+
+Run tests with:
+
+```bash
+uv run pytest tests/ -v
 ```
 
 ## Usage
@@ -151,6 +168,82 @@ recsel(data, expression="First & ' ' & Last = 'John Doe'")
 recsel(data, expression="Price * Quantity > 100")
 ```
 
+### Using recfix
+
+The `recfix` function checks and fixes rec files, similar to the `recfix` command-line utility.
+
+```python
+from python_recutils import recfix, format_recfix_output
+
+data = """
+%rec: Contact
+%mandatory: Name Email
+%type: Age int
+%key: Id
+%auto: Id
+
+Name: Alice
+Email: alice@example.com
+Age: 30
+
+Name: Bob
+Email: bob@example.com
+Age: twenty-five
+"""
+
+# Check integrity (default behavior)
+result = recfix(data)
+if not result.success:
+    print(result.format_errors())
+    # Output: error: type 'Contact' record 1 field 'Age': expected integer, got 'twenty-five'
+
+# Sort records according to %sort specification
+result = recfix(data, sort=True)
+print(format_recfix_output(result))
+
+# Generate auto fields for records missing them
+result = recfix(data, auto=True)
+
+# Encrypt confidential fields
+data_with_confidential = """
+%rec: User
+%confidential: Password
+
+Name: Alice
+Password: secret123
+"""
+result = recfix(data_with_confidential, encrypt=True, password="mykey")
+
+# Decrypt confidential fields
+result = recfix(encrypted_data, decrypt=True, password="mykey")
+```
+
+### recfix Options
+
+| Option | CLI Equivalent | Description |
+|--------|---------------|-------------|
+| `check` | (default) | Check database integrity |
+| `sort` | `-s` | Sort records per %sort specification |
+| `encrypt` | `--encrypt` | Encrypt confidential fields |
+| `decrypt` | `--decrypt` | Decrypt confidential fields |
+| `auto` | `-A` | Generate auto fields |
+| `password` | `-p` | Password for encryption/decryption |
+| `force` | `-f` | Force potentially dangerous operations |
+
+### Integrity Checks
+
+`recfix` validates records against their descriptor constraints:
+
+- **%mandatory**: Required fields must be present
+- **%key**: Key field must be unique across records
+- **%unique**: Field can only appear once per record
+- **%singular**: Field value must be unique across all records
+- **%prohibit**: Prohibited fields must not be present
+- **%allowed**: Only listed fields are allowed
+- **%type**: Field values must match their declared type
+- **%constraint**: Custom constraint expressions must evaluate to true
+- **%size**: Record set must have the specified number of records
+
 ### Working with Records
 
 ```python
@@ -222,12 +315,6 @@ Key concepts:
 - **Multi-line values**: Use `+` continuation or `\` line continuation
 - **Record descriptors**: Special records starting with `%rec:` that define record types
 - **Comments**: Lines starting with `#`
-
-## Running Tests
-
-```bash
-uv run pytest tests/ -v
-```
 
 ## License
 
