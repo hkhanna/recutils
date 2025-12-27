@@ -800,8 +800,7 @@ AuthorId: 1"""
         # When referenced record type doesn't exist, the error reports
         # that the foreign key value was not found in that type
         assert any(
-            e.field_name == "AuthorId"
-            and "not found" in e.message
+            e.field_name == "AuthorId" and "not found" in e.message
             for e in result.errors
         )
 

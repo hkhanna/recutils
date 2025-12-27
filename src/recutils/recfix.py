@@ -422,10 +422,7 @@ def _check_typedef_declarations(
             type_parts = type_spec.split(None, 1)
             if type_parts:
                 type_ref = type_parts[0]
-                if (
-                    type_ref not in builtin_types
-                    and type_ref not in type_defs
-                ):
+                if type_ref not in builtin_types and type_ref not in type_defs:
                     field_list = parts[0]
                     errors.append(
                         RecfixError(
